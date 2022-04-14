@@ -1,0 +1,133 @@
+#include <stdio.h>
+
+#define times 10
+typedef struct {
+    unsigned int StuNum;
+    char Name[20];
+    int math, computer;
+    double average;
+} stuData;
+
+void creat_f(stuData*, int);//創建檔案
+void write_f(stuData*);//寫入檔案
+void print_f1(stuData*);//全部印出
+void print_f2();//印出十個並排序
+void find(stuData*);//搜索資料
+void bubble(stuData*);//氣泡
+
+int main()
+{
+    stuData blankstudent = { 0, "", 0, 0, 0.0 };
+   
+    creat_f(&blankstudent, 10);//1.
+    write_f(&blankstudent);//2.
+    print_f1(&blankstudent);//3.
+   
+    print_f2();
+    find(&blankstudent);//3.
+    
+}
+
+void creat_f(stuData* data, int x) {
+    FILE* cfptr;
+    if (!(cfptr = fopen("student.dat", "wb"))) {
+        puts("File could not be opened.");
+    }
+    else {
+        *data = { 0, "", 0, 0, 0.0 };
+        for (int i = 0; i < x; i++) {
+            fwrite(data, sizeof(stuData), 1, cfptr);
+        }
+        fclose(cfptr);
+    }
+    
+}
+
+void write_f(stuData* data) {
+    FILE* cfptr;
+    if (!(cfptr = fopen("student.dat", "rb+"))) {
+        puts("File could not be opened.");
+    }
+    else {
+        while (puts("Enter student number(1 to 100, 0 to end input): "), scanf("%d", &data->StuNum), data->StuNum) {
+            puts("Enter your name, math grade, computer grade:");
+            fscanf(stdin, "%20s %3d %3d", data->Name, &data->math, &data->computer);
+            data->average = (data->math + data->computer) / 2.0;
+            fseek(cfptr, (data->StuNum - 1) * sizeof(stuData), SEEK_SET);
+            fwrite(data, sizeof(stuData), 1, cfptr);
+        }
+        fclose(cfptr);
+    }  
+}
+
+void print_f1(stuData* data) {
+    FILE* cfptr;
+    if (!(cfptr = fopen("student.dat", "rb"))) {
+        puts("File could not be opened");
+    }
+    else {
+        printf("%-20s %-20s %-20s %-20s %-20s\n", "Num", "Name", "math", "computer", "average");
+        while (!feof(cfptr)) {
+            *data = { 0, "", 0, 0, 0.0 };
+            int result = fread(data, sizeof(stuData), 1, cfptr);
+
+            if (result && data->StuNum) {
+                printf("%-20d %-20s %-20d %-20d %-20.2f\n", data->StuNum, data->Name, data->math, data->computer, data->average);
+            }
+        }
+        fclose(cfptr);
+    }
+}
+
+void print_f2() {
+    FILE* cfptr;
+    stuData data[10];
+    if (!(cfptr = fopen("student.dat", "rb"))) {
+        puts("File could not be opened");
+    }
+    else {
+        printf("%-20s %-20s %-20s %-20s %-20s\n", "Num", "Name", "math", "computer", "average");
+        
+        for (int i = 0; i < times;i++) {
+            data[i] = { 0, "", 0, 0, 0.0 };
+            fread(&data[i], sizeof(stuData), 1, cfptr); 
+        }
+        bubble(data);
+        for (int i = 0; i < times; i++) {
+            printf("%-20d %-20s %-20d %-20d %-20.2f\n", data[i].StuNum, data[i].Name, data[i].math, data[i].computer, data[i].average);
+        }        
+        fclose(cfptr);
+    }
+}
+
+void find(stuData* data) {
+    FILE* cfptr;
+    if (!(cfptr = fopen("student.dat", "rb+"))) {
+        puts("File could not be opened");
+    }
+    else {
+        int x;
+        while (puts("find the numbers:"), scanf("%d", &x), x) {
+            fseek(cfptr, (x - 1) * sizeof(stuData), SEEK_SET);
+            if (fread(data, sizeof(stuData), 1, cfptr)) {
+                printf("%-20s %-20s %-20s %-20s %-20s\n", "Num", "Name", "math", "computer", "average");
+                printf("%-20d %-20s %-20d %-20d %-20.2f\n", data->StuNum, data->Name, data->math, data->computer, data->average);
+            }
+            else {
+                puts("not found");
+            }
+        }
+    }
+}
+
+void bubble(stuData* data) {
+    for (int i = 0; i < times - 1; i++) {
+        for (int j = 0; j < times - 1; j++) {
+            if (data[j].math + data[j].computer < data[j + 1].math + data[j + 1].computer) {
+                stuData temp = data[j];
+                data[j] = data[j + 1];
+                data[j + 1] = temp;
+            }
+        }
+    }
+}
